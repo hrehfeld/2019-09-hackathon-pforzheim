@@ -34,7 +34,6 @@ def segment_color_marked(image):
     #mask = dilate(mask)
 
     radius = int(mask.shape[0] * 0.02)
-    print(radius)
     kernel = np.ones((radius, radius),np.uint8)
     mask = cv2.erode(mask, kernel, iterations=1)
 
@@ -48,7 +47,6 @@ def segment_color_marked(image):
 
 def dilate(image):
     radius = int(image.shape[0] * 0.0075)
-    print(radius)
     kernel = np.ones((radius, radius),np.uint8)
 
     image = cv2.dilate(image, kernel, iterations=1)
@@ -68,7 +66,6 @@ def create_contours_mask(image):
     block_size = int(num_pixels / 10000)
     # force block_size % 2 == 1
     block_size += 1 - block_size % 2
-    print(block_size)
     thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, block_size, 50)
 
     cv2.imwrite('thresh.jpg', thresh)
@@ -137,7 +134,6 @@ if __name__ == '__main__':
     #image = scale_image(image, 1 / 4)
     height, width = image.shape[:2]
     target_size = (w, round(w * (height / width)))
-    print(target_size)
     image = cv2.resize(image, target_size)
     # Removing Gaussian Noise
     image = cv2.GaussianBlur(image, (3, 3), 0)
