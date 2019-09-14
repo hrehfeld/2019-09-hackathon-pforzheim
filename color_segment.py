@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import os
 import sys
+import requests
+import time
 
 def create_color_marked_mask(image):
     image_hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
@@ -103,6 +105,29 @@ def create_contours_mask(image):
     return mask
     
 
+def get_ocr(image):
+    v1_url = 'https://aihackathoncomputervision.cognitiveservices.azure.com/vision/v1.0/recognizeText?printed=true'
+    v2_url = 'https://aihackathoncomputervision.cognitiveservices.azure.com/vision/v2.0/recognizeText?mode=Printed&language=de'
+
+    url = v2_url
+
+    data = {}
+    headers = {'Content-Type': 'application/octet-stream', 'Ocp-Apim-Subscription-Key': 'dfcc1195e70a44d7a4adfde1f075844d'}
+
+    header_key = {'Ocp-Apim-Subscription-Key': 'dfcc1195e70a44d7a4adfde1f075844d'}
+
+    data = cv2.imencode('.png', image)[1]
+    r = requests.post(url, headers=headers, data=data.tobytes())
+    r.raise_for_status()
+    next_url = r.headers['Operation-Location']
+    while True:
+        time.sleep(1)
+        r2 = requests.get(next_url, headers=header_key)
+        r2j = r2.json()
+        if r2j.get('status', None) != 'Running' and not 'error' in r2j:
+            return r2j
+
+
 if __name__ == '__main__':
     image_filepath = sys.argv[1]
     image = cv2.imread(image_filepath)
@@ -122,3 +147,7 @@ if __name__ == '__main__':
 
     result = cv2.cvtColor(result, cv2.COLOR_RGB2GRAY)
     cv2.imwrite('out.jpg', result)
+    json = get_ocr(result)
+    for line in json['recognitionResult']['lines']:
+        print(line['text'])
+    
