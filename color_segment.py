@@ -9,12 +9,12 @@ def create_color_marked_mask(image):
     image_hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
 
     # Range for lower red
-    lower_red = np.array([0,120,70])
+    lower_red = np.array([0,80,70])
     upper_red = np.array([10,255,255])
     mask1 = cv2.inRange(image_hsv, lower_red, upper_red)
 
     # Range for upper range
-    lower_red = np.array([170,120,70])
+    lower_red = np.array([170,80,70])
     upper_red = np.array([180,255,255])
     mask2 = cv2.inRange(image_hsv, lower_red, upper_red)
 
@@ -27,15 +27,15 @@ def segment_color_marked(image):
     mask = create_color_marked_mask(image)
     #image = cv2.bitwise_and(image, image, mask=mask)
     cv2.imwrite('mask_red.jpg', mask)
-    #cv2.imwrite('image_masked.jpg', image)
+    
     #image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    mask = create_contours_mask(mask)
-
+    #mask = create_contours_mask(mask)
+    #cv2.imwrite('image_masked.jpg', mask)
     #mask = dilate(mask)
 
     radius = int(mask.shape[0] * 0.02)
     kernel = np.ones((radius, radius),np.uint8)
-    mask = cv2.erode(mask, kernel, iterations=1)
+    #mask = cv2.erode(mask, kernel, iterations=1)
 
     
     cv2.imwrite('mask.jpg', mask)
@@ -83,7 +83,7 @@ def create_contours_mask(image):
 
 
     # If it has significant area, add to list
-    filtered = [c for c in contours if cv2.contourArea(c) > (num_pixels * 0.001)]
+    filtered = [c for c in contours if (num_pixels * 0.005) > cv2.contourArea(c) > (num_pixels * 0.001)]
 
     assert filtered, contours
 
@@ -140,10 +140,33 @@ if __name__ == '__main__':
 
     
     result = segment_color_marked(image)
+    cv2.imwrite('out.jpg', result)
 
     result = cv2.cvtColor(result, cv2.COLOR_RGB2GRAY)
-    cv2.imwrite('out.jpg', result)
+    cv2.imwrite('out1.jpg', result)
     json = get_ocr(result)
     for line in json['recognitionResult']['lines']:
-        print(line['text'])
-    
+       print(line['text'])
+    dsaasdsaälj
+    url = "https://aihackathonaz.azurewebsites.net/api/TextProcessing"
+    r = requests.post(url, json=json)
+    r.raise_for_status()
+
+    data = r.json()
+
+    articles = [(article.get('articleNumber', None), article.get('sizeNumber')) for article in data]
+ 
+    database_url = "http://hackathon.alekzone.com/data/articles.json"
+
+    r = requests.get(database_url)
+    r.raise_for_status()
+    database = r.json()
+
+    #print(database)
+    database = dict(zip([item["article_id"] for item in database["articles"]], database["articles"]))
+    print(database)
+
+    for id, size in articles:
+        id = 99
+        if id in database:
+            print(database[id]["description"])
